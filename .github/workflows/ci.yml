@@ -21,7 +21,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-24.04]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Test suite (fake WordPress site + simulated wp-cli)
         run: bash tests/run.sh
 
@@ -29,7 +29,7 @@ jobs:
     name: ShellCheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Lint (warnings and errors fail the build)
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
@@ -39,7 +39,7 @@ jobs:
     name: Repository hygiene
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: No CRLF line endings in shell code
         run: |
           if grep -rIl $'\r' bin lib checks tests install.sh Makefile; then
