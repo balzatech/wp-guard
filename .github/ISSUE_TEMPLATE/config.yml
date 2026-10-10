@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability in wp-guard itself
+    url: https://github.com/balzatech/wp-guard/security/advisories/new
+    about: Please report it privately (see SECURITY.md), not as a public issue.

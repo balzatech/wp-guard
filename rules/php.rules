@@ -1,0 +1,33 @@
+# LEVEL@@id@@description@@regex (ERE, case-insensitive). One rule per line. # = comment.
+# Level ALERT = almost certainly malicious; WARN = suspicious, review.
+ALERT@@eval_decode@@eval() of decoded or obfuscated code (base64/gzip/rot13)@@eval\s*\(\s*@?\s*(base64_decode|gzinflate|gzuncompress|gzdecode|str_rot13|convert_uudecode|hex2bin|strrev|rawurldecode|urldecode)\s*\(
+ALERT@@eval_input@@eval/assert/create_function running visitor data@@\b(eval|assert|create_function)\s*\(\s*@?\s*\$_(GET|POST|REQUEST|COOKIE|SERVER|FILES)
+ALERT@@exec_input@@command execution with visitor data@@\b(system|exec|shell_exec|passthru|popen|proc_open|pcntl_exec)\s*\(\s*@?\s*\$_(GET|POST|REQUEST|COOKIE)
+ALERT@@backtick_input@@shell backticks with visitor data@@`[^`]{0,80}\$_(GET|POST|REQUEST|COOKIE)
+ALERT@@varfunc_input@@dynamic function called from visitor data@@\$_(GET|POST|REQUEST|COOKIE)\s*\[[^]]{1,60}\]\s*\(
+ALERT@@varfunc_alias@@variable-function fed by visitor data@@\$\w+\s*=\s*@?\$_(GET|POST|REQUEST|COOKIE)\s*\[[^]]{1,60}\]\s*;\s*@?\$\w+\s*\(
+ALERT@@preg_e@@preg_replace with the /e modifier (executes code)@@preg_replace\s*\(\s*['"][^'"]{1,200}/[a-z]*e[a-z]*['"]\s*,
+ALERT@@known_shell@@known webshell signatures@@(FilesMan|c99shell|r57shell|b374k|WSO_VERSION|wso\s+shell|IndoXploit|Mini\s+Shell|Alfa\s+Shell|AnonymousFox|c100\s+shell|Priv8\s+(shell|php)|Webshell\s+by|0byte\s+shell|Sh3ll|PHPShell)
+ALERT@@callback_input@@dangerous callback or visitor data in a higher-order function@@\b(array_map|array_filter|array_walk|usort|uasort|uksort|call_user_func|call_user_func_array|register_shutdown_function|ob_start|forward_static_call)\s*\(\s*@?\s*(\$_(GET|POST|REQUEST|COOKIE)|['"](assert|system|exec|shell_exec|passthru|eval|popen|proc_open)['"])
+ALERT@@write_input@@file writes with visitor data@@\b(file_put_contents|fwrite|fputs)\s*\([^;]{0,200}\$_(GET|POST|REQUEST|COOKIE)
+ALERT@@remote_exec@@runs or includes downloaded code / dangerous wrappers@@(eval\s*\(\s*@?\s*(file_get_contents|curl_exec|fopen|fread|stream_get_contents|gzinflate)|\b(include|require)(_once)?\s*\(?\s*@?\s*['"]?\s*(https?|ftp|data|phar|expect|zip|php)://)
+ALERT@@include_fake@@include of non-PHP files (images/txt/log)@@\b(include|require)(_once)?\s*\(?\s*@?\s*['"][^'"$]{1,100}\.(jpe?g|png|gif|ico|txt|log|tmp|dat|bak|cache|svg)['"]
+ALERT@@auth_bypass@@forced login or admin role (access backdoor)@@(wp_set_auth_cookie\s*\(\s*(\$_(GET|POST|REQUEST|COOKIE)|[0-9]+\s*[,)])|->set_role\s*\(\s*['"]administrator['"]|wp_set_current_user\s*\(\s*\$_(GET|POST|REQUEST|COOKIE))
+ALERT@@miner@@cryptocurrency mining@@(coinhive|coin-hive|cryptonight|stratum\+tcp|xmrig|minexmr|webminer|crypto-loot|monerominer)
+ALERT@@chr_chain@@functions assembled by hand with chr()@@(chr\s*\(\s*[0-9a-fx]{1,5}\s*\)\s*\.\s*){6,}
+ALERT@@gz_chain@@compressed and encoded payload@@(gzinflate|gzuncompress|gzdecode)\s*\(\s*@?\s*(base64_decode|str_rot13)\s*\(
+ALERT@@php_input_eval@@eval on php://input@@eval\s*\(.{0,60}php://input
+WARN@@obf_hex@@strings with many \xNN escapes (obfuscation)@@(\\x[0-9a-f]{2}){12,}
+WARN@@obf_octal@@strings with long octal escapes@@(\\[0-7]{3}){12,}
+WARN@@b64_blob@@very long base64 literal@@['"][A-Za-z0-9+/]{600,}={0,2}['"]
+WARN@@ws_padding@@code hidden behind hundreds of spaces@@^[[:space:]]{150,}[^[:space:]]
+WARN@@move_upload@@file upload (confirm it is legitimate)@@\bmove_uploaded_file\s*\(
+WARN@@bot_cloak@@different behavior for search engines/bots@@HTTP_USER_AGENT[^;]{0,200}(googlebot|bingbot|yandex|baidu|slurp|duckduck)
+WARN@@ref_cloak@@different behavior depending on the Google/Bing referrer@@HTTP_REFERER[^;]{0,160}(google|bing|yahoo|duckduckgo)
+WARN@@admin_create@@creates administrators from code@@(wp_(insert|create)_user\s*\([^;]{0,200}administrator|['"]role['"]\s*=>\s*['"]administrator['"])
+WARN@@hide_errors@@silences errors and removes limits (typical of malicious scripts)@@@?error_reporting\s*\(\s*0\s*\)\s*;\s*@?(ini_set|set_time_limit|ignore_user_abort)
+WARN@@sys_probe@@server reconnaissance functions@@\b(posix_getpwuid|posix_getgrgid|symlink)\s*\(
+WARN@@mail_input@@mail with visitor data (spam)@@\bmail\s*\(\s*\$_(GET|POST|REQUEST)
+WARN@@head_inject@@injects remote content into the header/footer@@add_action\s*\(\s*['"]wp_(head|footer)['"][^;]{0,300}(base64_decode|eval\s*\(|file_get_contents\s*\(\s*['"]https?://|wp_remote_get\s*\(\s*['"]https?://)
+WARN@@htaccess_write@@modifies .htaccess/php.ini from PHP@@(file_put_contents|fopen|fwrite)\s*\([^;]{0,100}(\.htaccess|\.user\.ini|php\.ini)
+WARN@@disable_sec@@touches disable_functions/open_basedir@@(ini_set|ini_restore)\s*\(\s*['"](disable_functions|open_basedir|safe_mode)

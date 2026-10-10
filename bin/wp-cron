@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# wp-cron - Shows the recommended crontab lines (installs nothing)
+#
+#   wp-cron [--path DIR]
+#
+# Paste them with "crontab -e" over SSH, or into your hosting panel's Cron Jobs page (one per task).
+
+WPG_HOME=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
+# shellcheck disable=SC1091
+. "$WPG_HOME/lib/bootstrap.sh"
+wpg_use config
+
+wpg_parse "$@"
+cat <<CRON
+# wp-guard: daily watch (read-only; alerts only when the alerts change)
+17 3 * * *   bash $WPG_HOME/bin/wp-watch  >> $HOME/.wp_auditor/cron.log 2>&1
+# wp-guard: remediation every 6 h. START IN DRY-RUN MODE: review ~/.wp_auditor/heal.log for 1-2 weeks
+# and only then add --apply.
+43 */6 * * * bash $WPG_HOME/bin/wp-heal   >> $HOME/.wp_auditor/cron.log 2>&1
+CRON

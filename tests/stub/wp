@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Simulated wp-cli for the tests. Behaviour can be tuned with environment variables:
+#   STUB_BAD_ADMIN=1   report one unauthorized administrator ("hacker") in the heal plan
+#   STUB_LOG=FILE      append every call to FILE (the tests count how often wp-cli is started)
+[ -n "${STUB_LOG:-}" ] && echo "$*" >> "$STUB_LOG"
+case "$*" in
+ *"core verify-checksums"*) echo "Success: WordPress installation verifies against checksums." ;;
+ *"plugin list --field=name"*) printf 'good-plugin\nhostinger-auto-updates\n' ;;
+ *"plugin verify-checksums good-plugin"*)
+   # like the real wp-cli: only complain about a file that is actually there
+   if [ -f "${WP_PATH:-.}/wp-content/plugins/good-plugin/extra.php" ]; then
+     echo "plugin_name,file,message"; echo "good-plugin,extra.php,File was added"
+   else echo "Success: Verified 1 of 1 plugins."; fi ;;
+ *"eval-file"*heal_db*) [ "${STUB_BAD_ADMIN:-0}" = 1 ] && echo "DB           unauthorized admin hacker (ID 9): demote to subscriber and end their sessions" ;;
+ *"option get siteurl"*) echo "https://example.test" ;;
+ *"option get admin_email"*) echo "admin@example.test" ;;
+ *"user list"*"user_login"*) echo "owner" ;;
+ *"plugin get"*) echo "1.0" ;;
+ *"core version"*) echo "6.8" ;;
+esac
+exit 0

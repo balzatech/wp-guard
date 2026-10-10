@@ -1,0 +1,7 @@
+# Shell scripts must keep Unix line endings: CRLF breaks bash ("$'\r': command not found").
+* text=auto eol=lf
+*.sh text eol=lf
+bin/* text eol=lf
+rules/* text eol=lf
+tests/stub/* text eol=lf
+LICENSE text eol=lf

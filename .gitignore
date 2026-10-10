@@ -1,0 +1,8 @@
+# local state and secrets must never be committed (real state lives in ~/.wp_auditor, outside the repo)
+.wp_auditor/
+.wpg_test*/
+allow.txt
+*.log
+*.bak
+*.bak.*
+*.tgz

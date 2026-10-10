@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034  # shared state: assigned here, read by the modules and commands that source this file
+# wp-heal - SAFE remediation (never deletes: moves to quarantine)
+#
+#   wp-heal [--apply] [options]
+#
+# Without --apply it only shows the plan (dry run). With --apply it acts:
+#   - executables / images with PHP inside uploads, PHP in languages|upgrade|fonts, foreign PHP in the web root
+#   - files with attacker markers, extra files in the core or in official plugins
+#   - fake plugin folders; modified core/plugins are reinstalled from wordpress.org (same version)
+#   - o+w permissions, PHP blocked in uploads, unauthorized admins -> subscriber, registration closed
+# Safety: ignores files younger than MIN_AGE_MIN minutes; if there are more than MAX_HEAL targets it touches nothing.
+# Undo: wp-guard undo ~/.wp_auditor/quarantine/DATE
+
+WPG_HOME=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
+# shellcheck disable=SC1091
+. "$WPG_HOME/lib/bootstrap.sh"
+wpg_use config runtime findings inventory notify heal
+
+wpg_parse "$@"
+MODE=heal; WPG_QUIET_LOCK=1
+wpg_load_config; wpg_init
+
+inventory_run
+heal_run; exit $?

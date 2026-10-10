@@ -1,0 +1,42 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Do not paste secrets** (webhook URLs, tokens, database passwords) or real site URLs you want to keep private. Security problems go through the private process in SECURITY.md, not here.
+  - type: input
+    id: version
+    attributes:
+      label: wp-guard version
+      description: Output of `wp-guard --version`
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Command you ran
+      render: shell
+      placeholder: wp-guard scan --only php
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Paste the relevant part (redact anything private).
+      render: text
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Hosting provider / OS, `bash --version | head -n1`, `wp --version`, shared hosting or VPS.
+    validations:
+      required: true

@@ -1,0 +1,13 @@
+# LEVEL@@id@@description@@regex (ERE, case-insensitive). One rule per line. # = comment.
+ALERT@@cb_cmd@@Windows/PowerShell command to paste (ClickFix)@@(powershell|pwsh|mshta|cmd(\.exe)?\s*/[ck]|rundll32|regsvr32|bitsadmin|certutil)[^'"]{0,60}(-w(indowstyle)?\s+h|-enc|-e\s|iex|invoke-|https?:|\.hta)
+ALERT@@doc_write_dec@@document.write of decoded content@@document\.write\s*\(\s*(unescape|atob|decodeURIComponent|String\.fromCharCode)
+ALERT@@atob_blob@@decoded base64 blob in JS@@atob\s*\(\s*['"][A-Za-z0-9+/=]{100,}
+ALERT@@unescape_blob@@decoded %xx block@@(unescape|decodeURIComponent)\s*\(\s*['"](%[0-9a-f]{2}){24,}
+ALERT@@miner@@cryptocurrency mining@@(coinhive|coin-hive|cryptonight|stratum\+tcp|xmrig|minexmr|webminer|crypto-loot)
+ALERT@@fake_captcha@@fake captcha asking to paste commands@@(verify\s+you\s+are\s+human|prove\s+you\s+are\s+not\s+a\s+robot|human\s+verification|not\s+a\s+robot)[^<]{0,400}(win(dows)?\s*(\+|key)?\s*r\b|ctrl\s*\+\s*v|win\s*\+\s*x)
+WARN@@obf_array@@obfuscator.io-style variable (_0x....)@@var\s+_0x[0-9a-f]{4,6}\s*=\s*\[
+WARN@@packer@@packed JS (Dean Edwards)@@eval\(function\(p,a,c,k,e,[dr]\)
+WARN@@hex_url@@URL written in hex@@\\x68\\x74\\x74\\x70
+WARN@@iframe_hidden@@hidden iframe@@<iframe[^>]{0,300}(width\s*=\s*["']?[01]["' >]|height\s*=\s*["']?[01]["' >]|display\s*:\s*none|visibility\s*:\s*hidden)
+WARN@@loc_redirect@@JS redirect to an absolute URL@@(window\.|document\.|top\.|parent\.)?location(\.href|\.replace)?\s*(=|\()\s*['"]https?://
+WARN@@sw_register@@registers a service worker (persistence in the browser)@@serviceWorker\s*\.\s*register\s*\(

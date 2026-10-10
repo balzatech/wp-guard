@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# wp-guard - Detect and fix malware in WordPress
+#
+#   wp-guard init               guided first-time setup (run once)
+#   wp-guard scan [quick]       find problems (read-only)         [= wp-audit]
+#                               add --format json for machine-readable output
+#   wp-guard fix [--apply]      preview / apply the safe fixes    [= wp-heal]
+#   wp-guard undo DIR           revert a quarantine               [= wp-restore]
+#   wp-guard baseline           save the current (clean) state
+#   wp-guard watch              for cron: alert only on changes
+#   wp-guard notify [text]      send a test notification
+#   wp-guard cron               print recommended crontab lines
+#
+# The original names also work: audit, heal, restore.
+
+WPG_HOME=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
+cmd=${1:-}
+
+# no arguments in a terminal: a small menu instead of a wall of help
+if [ -z "$cmd" ] && [ -t 0 ] && [ -t 1 ]; then
+  cat <<'MENU'
+wp-guard - what do you want to do?
+  1) Scan the site for problems (read-only)
+  2) Preview the safe fixes (changes nothing)
+  3) Apply the safe fixes (asks first, nothing is deleted)
+  4) Undo a previous fix
+  5) Set up alerts (Slack / Discord / ntfy ...)
+  6) First-time setup
+  7) Help
+MENU
+  read -r -p "Choice [1]: " choice
+  case ${choice:-1} in
+    1) set -- scan ;; 2) set -- fix ;; 3) set -- fix --apply ;;
+    4) read -r -p "Quarantine folder to restore: " qd; set -- undo "$qd" ;;
+    5) set -- notify setup ;; 6) set -- init ;;
+    *) set -- help ;;
+  esac
+  cmd=$1
+fi
+case "$cmd" in
+  scan) cmd=audit ;;
+  fix) cmd=heal ;;
+  undo) cmd=restore ;;
+esac
+case "$cmd" in
+  init|audit|watch|baseline|heal|restore|cron|notify) shift; exec bash "$WPG_HOME/bin/wp-$cmd" "$@" ;;
+  version|-V|--version) echo "wp-guard $(tr -d '[:space:]' < "$WPG_HOME/VERSION" 2>/dev/null)"; exit 0 ;;
+  help|-h|--help) sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  *) sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 64 ;;
+esac

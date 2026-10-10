@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034  # shared state: assigned here, read by the modules and commands that source this file
+# wp-watch - Watcher for cron (READ-ONLY)
+#
+#   wp-watch [options]
+#
+# Checks files, server, database and public site (no logs) and alerts ONLY when the set of
+# alerts changes. With no alerts, it accepts the current state as the new baseline (legitimate updates).
+# Silent when nothing is new. Notifies through the configured channels (Slack, Discord, ntfy, Telegram, email).
+# Exit codes: 0 clean, 1 warnings, 2 alerts.
+
+WPG_HOME=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
+# shellcheck disable=SC1091
+. "$WPG_HOME/lib/bootstrap.sh"
+wpg_use config runtime findings scan inventory baseline correlate report notify audit
+
+wpg_parse "$@"
+MODE=watch; WPG_QUIET_LOCK=1
+wpg_load_config; wpg_init
+
+WPG_CACHE=1   # incremental scanning (see lib/cache.sh)
+inventory_run
+audit_run
+
+FP=$(awk -F'\t' '$1=="ALERT" {print $2 "\t" $3}' "$TMP/all.tsv" | grep -vE 'Evidence|Files modified \+-' | sort -u | sha256sum | cut -c1-64)
+LASTFP=$(cat "$STATE/last_alert.fp" 2>/dev/null)
+if [ "$NA" -gt 0 ]; then
+  if [ "$FP" != "$LASTFP" ]; then
+    NO_COLOR=1 print_report "$NA" "$NW" "$NI" "$DUR" | sed "s/\x1b\[[0-9;]*m//g" > "$TMP/report.txt"
+    cat "$TMP/report.txt"; report_save "$TMP/report.txt"
+    # only the ALERTS go to the channel (warnings and details stay in the saved report)
+    notify "$(sed '/^################ WARNINGS/,$d' "$TMP/report.txt"; echo; echo "Full report: $REPORT")"
+    echo "$FP" > "$STATE/last_alert.fp"
+  fi
+else
+  rm -f "$STATE/last_alert.fp"
+  [ -f "$MAN_NEW" ] && baseline_save
+fi
+
+audit_exit_code; exit $?

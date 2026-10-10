@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034  # shared state: assigned here, read by the modules and commands that source this file
+# wp-notify - Set up and test alert channels (Slack, Discord, ntfy, Telegram, email)
+#
+#   wp-notify              send a test message to every configured channel
+#   wp-notify setup        guided setup: pick a channel, save it, send a real test
+#   wp-notify status       list the configured channels
+#   wp-notify "text"       send your own text
+#
+# Uses exactly the same code as the real alerts (wp-watch, wp-heal). If a send fails it says so.
+
+WPG_HOME=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
+# shellcheck disable=SC1091
+. "$WPG_HOME/lib/bootstrap.sh"
+wpg_use config runtime findings notify notify_setup
+
+wpg_parse "$@"
+MODE=notify
+wpg_load_config; wpg_init
+
+case "${WPG_ARGS[0]:-}" in
+  setup)  notify_setup_wizard; exit 0 ;;
+  status) ch=$(notify_channels); echo "Alert channels: ${ch:-none}"; [ -n "$ch" ] || echo "Run: wp-guard notify setup"; exit 0 ;;
+esac
+
+[ -n "$(notify_channels)" ] || { echo "No alert channel configured. Run: wp-guard notify setup" >&2; exit 1; }
+notify "${WPG_ARGS[0]:-wp-guard: test message from $SITE_HOST ($(date '+%F %H:%M'))}"
+echo "Delivered to $NOTIFY_SENT channel(s), failed on $NOTIFY_FAILED."
+[ "$NOTIFY_FAILED" -eq 0 ] && [ "$NOTIFY_SENT" -gt 0 ]

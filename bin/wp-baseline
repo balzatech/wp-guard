@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034  # shared state: assigned here, read by the modules and commands that source this file
+# wp-baseline - Saves the current state of the site as "clean"
+#
+#   wp-baseline [options]
+#
+# Computes hashes of the code files and the installed versions. wp-audit/wp-watch report
+# everything that changes afterwards. Do it ONLY when you are sure the site is clean.
+
+WPG_HOME=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
+# shellcheck disable=SC1091
+. "$WPG_HOME/lib/bootstrap.sh"
+wpg_use config runtime findings inventory baseline
+
+wpg_parse "$@"
+MODE=baseline
+wpg_load_config; wpg_init
+
+build_inventory
+baseline_save
+echo "Baseline saved: $(wc -l < "$MAN_OLD") files, $(wc -l < "$VER_OLD") components."
+echo "Do this ONLY when you are sure the site is clean."
